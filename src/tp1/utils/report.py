@@ -1,4 +1,11 @@
-from tp1.utils.capture import Capture
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import cm
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.graphics.shapes import Drawing
+from reportlab.graphics.charts.barcharts import VerticalBarChart
+
+from src.tp1.utils.capture import Capture
 
 
 class Report:
@@ -7,40 +14,55 @@ class Report:
         self.filename = filename
         self.title = "TITRE DU RAPPORT"
         self.summary = summary
-        self.array = ""
-        self.graph = ""
+        self.array = []
+        self.graph = None
 
     def concat_report(self) -> str:
-        """
-        Concat all data in report
-        """
         content = ""
         content += self.title
         content += self.summary
-        content += self.array
-        content += self.graph
-
         return content
 
     def save(self, filename: str) -> None:
-        """
-        Save report in a file
-        :param filename:
-        :return:
-        """
-        final_content = self.concat_report()
-        with open(self.filename, "w") as report:
-            report.write(final_content)
+        styles = getSampleStyleSheet()
+        doc = SimpleDocTemplate(filename, pagesize=A4)
+        elements = []
+
+        elements.append(Paragraph(self.title, styles["Title"]))
+        elements.append(Spacer(1, 0.5 * cm))
+        elements.append(Paragraph(self.summary, styles["Normal"]))
+        elements.append(Spacer(1, 0.5 * cm))
+
+        if self.array:
+            elements.append(Table(self.array))
+            elements.append(Spacer(1, 0.5 * cm))
+
+        if self.graph:
+            elements.append(self.graph)
+
+        doc.build(elements)
 
     def generate(self, param: str) -> None:
-        """
-        Generate graph and array
-        """
+        protocols = self.capture.protocols
+        if not protocols:
+            return
+
         if param == "graph":
-            # TODO: generate graph
-            graph = ""
-            self.graph = graph
+            sorted_p = sorted(protocols.items(), key=lambda x: x[1], reverse=True)
+            labels = [p[0] for p in sorted_p]
+            values = [p[1] for p in sorted_p]
+
+            drawing = Drawing(400, 200)
+            chart = VerticalBarChart()
+            chart.x = 30
+            chart.y = 20
+            chart.width = 350
+            chart.height = 160
+            chart.data = [values]
+            chart.categoryAxis.categoryNames = labels
+            drawing.add(chart)
+            self.graph = drawing
+
         elif param == "array":
-            # TODO: generate array
-            array = ""
-            self.array = array
+            sorted_p = sorted(protocols.items(), key=lambda x: x[1], reverse=True)
+            self.array = [["Protocol", "Count"]] + [[p, str(c)] for p, c in sorted_p]

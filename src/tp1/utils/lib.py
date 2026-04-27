@@ -1,17 +1,13 @@
-def hello_world() -> str:
-    """
-    Hello world function
+from scapy.all import get_if_list
 
-    :return: "hello world"
-    """
+
+def hello_world() -> str:
     return "hello world"
 
 
 def choose_interface() -> str:
-    """
-    Return network interface and input user choice
-
-    :return: network interface
-    """
-    interface = ""
-    return interface
+    interfaces = get_if_list()
+    for i, iface in enumerate(interfaces):
+        print(f"  {i}: {iface}")
+    idx = int(input("Choose interface number: "))
+    return interfaces[idx]
